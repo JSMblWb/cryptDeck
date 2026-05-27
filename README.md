@@ -1,2 +1,2 @@
-# CryptDec
+# cryptDeck
 University work (ргр1)
