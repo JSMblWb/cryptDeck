@@ -3,6 +3,8 @@
 #include <string>
 #include <stdexcept>
 #include <random>
+#include <fstream>
+#include <filesystem>
 
 #ifdef _WIN32
     #ifdef BUILD
@@ -16,7 +18,12 @@
 
 class EXPORT Vernam{
     public:
-    std::wstring Encrypt(const std::wstring& text, const std::wstring& key);
-    std::wstring Decrypt(const std::wstring& encrypted, const std::wstring& key);
+    std::wstring EncryptOrDecryptText(const std::wstring& text, const std::wstring& key);
+    void EncryptOrDecryptTextFile(const std::string& path, const std::wstring& key);
+    void EncryptOrDecryptBinary(const std::string& path, const std::string& key);
+
     std::wstring KeyGenerator(size_t length, bool isLatin);
+    
+    private:
+    std::wint_t CipherFunc(const std::wint_t& c, const std::wint_t& key);
 };
