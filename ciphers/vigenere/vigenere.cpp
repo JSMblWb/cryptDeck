@@ -1,47 +1,20 @@
 #include "vigenere.h"
 
-#define LAT_START 97
-#define LAT_END 122
-#define RU_START 1072
-#define RU_END 1105
-#define SYMBOLS_START 32
-#define SYMBOLS_END 64
-
-std::wstring Vigenere::Encrypt(const std::wstring& text, const std::wstring& key){
+std::wstring Vigenere::EncryptText(const std::wstring& text, const std::wstring& key){
     std::wstring out = std::wstring(text.size(), 0);
 
     for (int i = 0; i < text.size(); i++){
-        wint_t letter = towlower(text[i]);
-        wint_t keyAlphLength = (towlower(key[i % key.size()]) >= RU_START) ? RU_START : ((towlower(key[i % key.size()]) >= LAT_START) ? LAT_START : SYMBOLS_START);
-        int charType = (letter >= RU_START) ? 0 : ((letter >= LAT_START) ? 1 : 2);
-        wint_t result = letter + (towlower(key[i % key.size()]) - keyAlphLength);
-
-        switch (charType){
-            case 0: out[i] = (result > RU_END) ? (result - (RU_END-RU_START)) : result; break;
-            case 1: out[i] = (result > LAT_END) ? (result - (LAT_END-LAT_START)) : result; break;
-            case 2: out[i] = (result > SYMBOLS_END) ? (result - (SYMBOLS_END-SYMBOLS_START)) : result; break;
-            default: out[i] = result; break;
-        }
+        out[i] = Encrypt(text[i], key[i % key.size()]);
     }
 
     return out;
 }
 
-std::wstring Vigenere::Decrypt(const std::wstring& encrypted, const std::wstring& key){
+std::wstring Vigenere::DecryptText(const std::wstring& encrypted, const std::wstring& key){
     std::wstring out = std::wstring(encrypted.size(), 0);
     
     for (int i = 0; i < encrypted.size(); i++){
-        wint_t letter = towlower(encrypted[i]);
-        wint_t keyAlphLength = (towlower(key[i % key.size()]) >= RU_START) ? RU_START : ((towlower(key[i % key.size()]) >= LAT_START) ? LAT_START : SYMBOLS_START);
-        int charType = (letter >= RU_START) ? 0 : ((letter >= LAT_START) ? 1 : 2);
-        wint_t result = letter - (towlower(key[i % key.size()]) - keyAlphLength);
-
-        switch (charType){
-            case 0: out[i] = (result < RU_START) ? (result + (RU_END-RU_START)) : result; break;
-            case 1: out[i] = (result < LAT_START) ? (result + (LAT_END-LAT_START)) : result; break;
-            case 2: out[i] = (result < SYMBOLS_START) ? (result + (SYMBOLS_END-SYMBOLS_START)) : result; break;
-            default: out[i] = result; break;
-        }
+        out[i] = Decrypt(encrypted[i], key[i % key.size()]);
     }
 
     return out;
@@ -67,4 +40,141 @@ std::wstring Vigenere::KeyGenerator(size_t length, bool isLatin){
     }
 
     return key;
+}
+
+void Vigenere::EncryptTextFile(const std::string& path, const std::wstring& key){
+    std::wifstream in(path, std::ios::binary);;
+    std::wofstream out("temp.tmp", std::ios::binary);
+    wchar_t c;
+    size_t i = 0;
+
+    if (!in.is_open())
+        throw std::runtime_error("Ошибка открытия файла");
+
+    while (in.get(c)){
+        std::streampos pos = in.tellg();
+
+        out.put(Encrypt(c, key[i % key.size()]));
+
+        i++;
+    }
+
+    in.close();
+    out.close();
+
+    std::filesystem::rename("temp.tmp", path);
+}
+
+void Vigenere::DecryptTextFile(const std::string& path, const std::wstring& key){
+    std::wifstream in(path, std::ios::binary);;
+    std::wofstream out("temp.tmp", std::ios::binary);
+    wchar_t c;
+    size_t i = 0;
+
+    if (!in.is_open())
+        throw std::runtime_error("Ошибка открытия файла");
+
+    while (in.get(c)){
+        std::streampos pos = in.tellg();
+
+        out.put(Decrypt(c, key[i % key.size()]));
+
+        i++;
+    }
+
+    in.close();
+    out.close();
+
+    std::filesystem::rename("temp.tmp", path);
+}
+
+void Vigenere::EncryptBinary(const std::string& path, const std::string& key){
+    std::ifstream in(path, std::ios::binary);;
+    std::ofstream out("temp.tmp", std::ios::binary);
+    size_t i = 0;
+
+    if (!in.is_open())
+        throw std::runtime_error("Ошибка открытия файла");
+
+    unsigned char byte;
+
+    while(in.read(reinterpret_cast<char*>(&byte), 1)){
+        unsigned char keyByte = static_cast<unsigned char>(key[i % key.size()]);
+
+        byte = (byte + keyByte) % 256;
+        out.write(reinterpret_cast<const char*>(&byte), 1);
+        i++;
+    }
+
+    in.close();
+    out.close();
+
+    std::filesystem::rename("temp.tmp", path);
+}
+
+void Vigenere::DecryptBinary(const std::string& path, const std::string& key){
+    std::ifstream in(path, std::ios::binary);;
+    std::ofstream out("temp.tmp", std::ios::binary);
+    size_t i = 0;
+
+    if (!in.is_open())
+        throw std::runtime_error("Ошибка открытия файла");
+
+    unsigned char byte;
+
+    while(in.read(reinterpret_cast<char*>(&byte), 1)){
+        unsigned char keyByte = static_cast<unsigned char>(key[i % key.size()]);
+
+        byte = (byte - keyByte + 256) % 256;
+
+        out.write(reinterpret_cast<const char*>(&byte), 1);
+        i++;
+    }
+
+    in.close();
+    out.close();
+
+    std::filesystem::rename("temp.tmp", path);
+}
+
+wchar_t Vigenere::Encrypt(const std::wint_t& c, const std::wint_t& key){
+    wint_t letter = c;
+    wint_t keyAlphLength = (key >= RU_START) ? RU_START : ((key >= RU_UP_START) ? RU_UP_START : ((key >= LAT_START) ? LAT_START : ((key >= LAT_UP_START) ? LAT_UP_START : SYMBOLS_START)));
+    int charType = (letter >= RU_START) ? 0 : ((letter >= RU_UP_START) ? 1 : ((letter >= LAT_START) ? 2 : ((letter >= LAT_UP_START) ? 3 : 4)));
+    wint_t result = letter + (key - keyAlphLength);
+
+    if (key == 1025)
+        result = letter + (key - RU_UP_START);
+    if (letter == 1025)
+        charType = 1;
+
+    switch (charType){
+        case 0: return (result > RU_END) ? (result - (RU_END-RU_START+1)) : result;
+        case 1: return (result > RU_UP_END) ? (result - (RU_UP_END-RU_UP_START+1)) : result;
+        case 2: return (result > LAT_END) ? (result - (LAT_END-LAT_START+1)) : result;
+        case 3: return (result > LAT_UP_END) ? (result - (LAT_UP_END-LAT_UP_START+1)) : result;
+        case 4: return (result > SYMBOLS_END) ? (result - (SYMBOLS_END-SYMBOLS_START+1)) : result;
+        default: return result;
+    }
+}
+
+wchar_t Vigenere::Decrypt(const std::wint_t& c, const std::wint_t& key){
+    wint_t letter = c;
+    wint_t keyAlphLength = (key >= RU_START) ? RU_START : ((key >= RU_UP_START) ? RU_UP_START : ((key >= LAT_START) ? LAT_START : ((key >= LAT_UP_START) ? LAT_UP_START : SYMBOLS_START)));
+    int charType = (letter >= RU_START) ? 0 : ((letter >= RU_UP_START) ? 1 : ((letter >= LAT_START) ? 2 : ((letter >= LAT_UP_START) ? 3 : 4)));
+    wint_t result = letter - (key - keyAlphLength);
+    
+    if (key == 1025)
+        result = letter - (key - RU_UP_START);
+    if (letter == 1025)
+        charType = 1;
+
+    switch (charType){
+        case 0: return (result < RU_START) ? (result + (RU_END-RU_START+1)) : result;
+        case 1: return (result < RU_UP_START) ? (result + (RU_UP_END-RU_UP_START+1)) : result;
+        case 2: return (result < LAT_START) ? (result + (LAT_END-LAT_START+1)) : result;
+        case 3: return (result < LAT_UP_START) ? (result + (LAT_UP_END-LAT_UP_START+1)) : result;
+        case 4: return (result < SYMBOLS_START) ? (result + (SYMBOLS_END-SYMBOLS_START+1)) : result;
+        default: return result;
+    }
 }
