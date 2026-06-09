@@ -42,13 +42,13 @@ std::wstring Vigenere::KeyGenerator(size_t length, bool isLatin){
     return key;
 }
 
-void Vigenere::EncryptTextFile(const std::string& path, const std::wstring& key){
+void Vigenere::EncryptTextFile(const std::string& path, const std::string& out_path, const std::wstring& key){
     std::wifstream in(path, std::ios::binary);;
-    std::wofstream out("temp.tmp", std::ios::binary);
+    std::wofstream out(out_path, std::ios::binary);
     wchar_t c;
     size_t i = 0;
 
-    if (!in.is_open())
+    if (!in.is_open() || !out.is_open())
         throw std::runtime_error("Ошибка открытия файла");
 
     while (in.get(c)){
@@ -61,17 +61,15 @@ void Vigenere::EncryptTextFile(const std::string& path, const std::wstring& key)
 
     in.close();
     out.close();
-
-    std::filesystem::rename("temp.tmp", path);
 }
 
-void Vigenere::DecryptTextFile(const std::string& path, const std::wstring& key){
+void Vigenere::DecryptTextFile(const std::string& path, const std::string& out_path, const std::wstring& key){
     std::wifstream in(path, std::ios::binary);;
-    std::wofstream out("temp.tmp", std::ios::binary);
+    std::wofstream out(out_path, std::ios::binary);
     wchar_t c;
     size_t i = 0;
 
-    if (!in.is_open())
+    if (!in.is_open() || !out.is_open())
         throw std::runtime_error("Ошибка открытия файла");
 
     while (in.get(c)){
@@ -84,23 +82,27 @@ void Vigenere::DecryptTextFile(const std::string& path, const std::wstring& key)
 
     in.close();
     out.close();
-
-    std::filesystem::rename("temp.tmp", path);
 }
 
-void Vigenere::EncryptBinary(const std::string& path, const std::string& key){
-    std::ifstream in(path, std::ios::binary);;
-    std::ofstream out("temp.tmp", std::ios::binary);
-    size_t i = 0;
+void Vigenere::EncryptBinary(const std::string& path, const std::string& out_path, const std::string& key_path){
+    std::ifstream in(path, std::ios::binary);
+    std::ifstream key(key_path, std::ios::binary);
+    std::ofstream out(out_path, std::ios::binary);
+    size_t i = 0, maxKeySize;
 
-    if (!in.is_open())
+    if (!in.is_open() || !key.is_open() || !out.is_open())
         throw std::runtime_error("Ошибка открытия файла");
 
-    unsigned char byte;
+    key.seekg(0, std::ios::end);
+    maxKeySize = key.tellg();
+    key.seekg(0, std::ios::beg);
 
-    while(in.read(reinterpret_cast<char*>(&byte), 1)){
-        unsigned char keyByte = static_cast<unsigned char>(key[i % key.size()]);
+    if (maxKeySize == 0)
+        throw std::runtime_error("Файл ключа пустой");
 
+    unsigned char byte, keyByte;
+
+    while(in.read(reinterpret_cast<char*>(&byte), 1) && (key.seekg(i % maxKeySize) && key.read(reinterpret_cast<char*>(&keyByte), 1))){        
         byte = (byte + keyByte) % 256;
         out.write(reinterpret_cast<const char*>(&byte), 1);
         i++;
@@ -108,23 +110,28 @@ void Vigenere::EncryptBinary(const std::string& path, const std::string& key){
 
     in.close();
     out.close();
-
-    std::filesystem::rename("temp.tmp", path);
+    key.close();
 }
 
-void Vigenere::DecryptBinary(const std::string& path, const std::string& key){
-    std::ifstream in(path, std::ios::binary);;
-    std::ofstream out("temp.tmp", std::ios::binary);
-    size_t i = 0;
+void Vigenere::DecryptBinary(const std::string& path, const std::string& out_path, const std::string& key_path){
+    std::ifstream in(path, std::ios::binary);
+    std::ifstream key(key_path, std::ios::binary);
+    std::ofstream out(out_path, std::ios::binary);
+    size_t i = 0, maxKeySize;
 
-    if (!in.is_open())
+    if (!in.is_open() || !key.is_open() || !out.is_open())
         throw std::runtime_error("Ошибка открытия файла");
 
-    unsigned char byte;
+    key.seekg(0, std::ios::end);
+    maxKeySize = key.tellg();
+    key.seekg(0, std::ios::beg);
 
-    while(in.read(reinterpret_cast<char*>(&byte), 1)){
-        unsigned char keyByte = static_cast<unsigned char>(key[i % key.size()]);
+    if (maxKeySize == 0)
+        throw std::runtime_error("Файл ключа пустой");
 
+    unsigned char byte, keyByte;
+
+    while(in.read(reinterpret_cast<char*>(&byte), 1) && (key.seekg(i % maxKeySize) && key.read(reinterpret_cast<char*>(&keyByte), 1))){
         byte = (byte - keyByte + 256) % 256;
 
         out.write(reinterpret_cast<const char*>(&byte), 1);
@@ -133,8 +140,37 @@ void Vigenere::DecryptBinary(const std::string& path, const std::string& key){
 
     in.close();
     out.close();
+    key.close();
+}
 
-    std::filesystem::rename("temp.tmp", path);
+void Vigenere::ByteFileKeyGenerator(std::string&path, size_t length){
+    if (length == 0)
+        throw std::runtime_error("Длина ключа должна быть больше 0");
+
+    std::ofstream out(path, std::ios::binary);
+
+    if (!out.is_open())
+        throw std::runtime_error("Не удалось открыть файл для записи ключа");
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned char> dist(0, 255);
+    std::vector<unsigned char> buffer(BUFFER_SIZE);
+
+    for (size_t remaining = length; remaining > 0; ){
+        size_t chunk = std::min(remaining, (size_t) BUFFER_SIZE);
+
+        for (size_t i = 0; i < chunk; i++){
+            buffer[i] = dist(gen);
+        }
+
+        out.write(reinterpret_cast<const char*>(buffer.data()), chunk);
+        remaining -= chunk;
+    }
+
+    std::cout << "Файл с ключом находится по адресу: " << path << std::endl;
+
+    out.close();
 }
 
 wchar_t Vigenere::Encrypt(const std::wint_t& c, const std::wint_t& key){
