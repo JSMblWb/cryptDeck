@@ -1,18 +1,9 @@
 #include <iostream>
-#include <dlfcn.h>
-#include <vector>
-#include <fstream>
-#include <cstring>
-
-using EncryptFunc = bool(*)(const unsigned char*, size_t, unsigned char*, size_t*);
-using DecryptFunc = bool(*)(const unsigned char*, size_t, unsigned char*, size_t*);
-using InitFunc = bool(*)(const char*, size_t);
-
-EncryptFunc encrypt = nullptr;
-DecryptFunc decrypt = nullptr;
-InitFunc init_cipher = nullptr;
+#include <string>
+#include "./ciphers/vernam/vernam.h"
 
 void clearConsole();
+void art();
 void seqEncode();
 void seqDecode();
 void seqAbout();
@@ -27,11 +18,18 @@ enum class startOptions {
 };
 
 enum class encodeOptions{
-	swTail = 0
+	swTail = 0,
+	exit = 1,
+	vernam = 2,
+	vigenere = 3
+	
 };
 
 enum class decodeOptions{
-	swAuto = 0
+	autoDec = 0,
+	exit = 1,
+	vernam = 2,
+	vigenere = 3
 };
 
 //=============================================================================== мэйн
@@ -39,31 +37,11 @@ int main() {
 	bool mainRunning = true;
 	bool isInvalid = false;
 
-	//загружаем библиотеку
-	if (!loadCipherLibrary("./libcipher.so")) {  // Путь к вашей .so
-		std::cerr << "Не удалось загрузить библиотеку шифрования." << std::endl;
-		return 1;
-	}
-
-	//инициализация (если требуется)
-	if (init_cipher) {
-		const char* key = "your_secret_key";
-		if (!init_cipher(key, strlen(key))) {
-			std::cerr << "Ошибка инициализации шифрования." << std::endl;
-			return 1;
-		}
-	}
-
 	while (mainRunning) {
 		clearConsole();
+		art();
 		std::cout << R"(
-	                    __  ___          __  
-	 __________ _____  / /_/ _ \___ ____/ /__
-	/ __/ __/ // / _ \/ __/ // / -_) __/  '_/
-	\__/_/  \_, / .__/\__/____/\__/\__/_/\_\ 
-	       /___/_/                           
-		)" << std::endl << R"(
-	Для продолжения впишите номер одной из следующих опций:
+	Главное меню:
 	1. Зашифровать файл;
 	2. Дешифровать файл;
 	3. О программе;
@@ -106,106 +84,111 @@ int main() {
 void clearConsole() {
 	std::cout << "\033[H\033[2J" << std::flush;
 }
+//=============================================================================== арт
+void art() {
+	std::cout << R"(
+                            __  ___          __
+         __________ _____  / /_/ _ \___ ____/ /__
+        / __/ __/ // / _ \/ __/ // / -_) __/  '_/
+        \__/_/  \_, / .__/\__/____/\__/\__/_/\_\
+               /___/_/
+	)" << std::endl;
+
+}
 //=============================================================================== энкод
 void seqEncode() {
-	if (!encrypt) {
-		std::cout << "Библиотека шифрования не загружена!" << std::endl;
-		std::cin.get();
-		return;
-	}
-
-	std::string inputFile, outputFile;
-
-	std::cout << "Введите путь к входному файлу: ";
-	std::cin >> inputFile;
-
-	std::cout << "Введите путь к выходному файлу: ";
-	std::cin >> outputFile;
-
-	try {
-		//читаем входной файл
-		std::vector<unsigned char> inputData = readFile(inputFile);
-
-		//пробуем с разными размерами буфера
-		size_t outputSize = inputData.size() + 1024; //запас для шифрования
-		std::vector<unsigned char> outputData(outputSize);
-
-		//вызываем функцию шифрования из .so
-		if (encrypt(inputData.data(), inputData.size(), outputData.data(), &outputSize)) {
-			outputData.resize(outputSize);
-			outputData.resize(outputSize);
-			writeFile(outputFile, outputData.data(), outputData.size());
-			std::cout << "Файл успешно зашифрован!" << std::endl;
-		} else {
-			std::cout << "Ошибка при шифровании!" << std::endl;
-		}
-	} catch (const std::exception& e) {
-		std::cout << "Ошибка: " << e.what() << std::endl;
-	}
-
-	std::cout << "Нажмите Enter для продолжения...";
-	std::cin.ignore();
-	std::cin.get();
-
-
 	bool funcRunning = true;
-	bool isTailOn = true
+	bool isInvalid = false;
+	bool isTailOn = true;
 	while (funcRunning) {
+		clearConsole();
+		art();
 		std::cout << R"(
-	Пункты меню:
-	1.
-	)"
+	Зашифровать:
+	1. Выход;
+	2. Шифр Вернама;
+	3. Шифр Вижинера;
+	)";
 	isTailOn ? std::cout << "0. Выключить генерацию хвоста для авто дешифровки" : std::cout << "0. Включить генерацию хвоста для авто дешифровки";
-	
-	}
+
+		std::cout << std::endl << std::endl << R"(	)";
+		if(isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
+
+		std::cout << "Ожидание ввода: ";
+		int userInput;
+		std::cin >> userInput; //НЕ ЗАБЫТЬ ЗДЕСЬ СДЕЛАТЬ ОТЛОВ ЭКСЕПШЕНА НА НЕ ЧИСЛО
+		encodeOptions choice = static_cast<encodeOptions>(userInput);
+		switch (choice) {
+			case encodeOptions::vernam: {
+				Vernam vernamObject;
+				std::wstring text = L"nstu";
+				std::wstring key = L"ndlbkj";
+				std::wstring encrypted = vernamObject.EncryptOrDecryptText(text, key);
+				break;
+				}
+			case encodeOptions::vigenere:
+				std::cout << "vigenere";
+				break;
+			case encodeOptions::swTail:
+				isTailOn ? isTailOn = false : isTailOn = true;
+				break;
+			case encodeOptions::exit:
+				funcRunning = false;
+				break;
+			default:
+				isInvalid = true;
+				break;
+                } //конец свича
+	}//конец цикла
 }
 //=============================================================================== декод
 void seqDecode() {
-	if (!decrypt) {
-		std::cout << "Библиотека дешифрования не загружена!" << std::endl;
-		std::cin.get();
-		return;
-	}
-
-	std::string inputFile, outputFile;
-
-	std::cout << "Введите путь к зашифрованному файлу: ";
-	std::cin >> inputFile;
-
-	std::cout << "Введите путь к выходному файлу: ";
-	std::cin >> outputFile;
-
-	try {
-		//аналогично encode
-		std::vector<unsigned char> inputData = readFile(inputFile);
- 
-		size_t outputSize = inputData.size() + 1024;
-		std::vector<unsigned char> outputData(outputSize);
-
-		if (decrypt(inputData.data(), inputData.size(), outputData.data(), &outputSize)) {
-			outputData.resize(outputSize);
-			writeFile(outputFile, outputData.data(), outputData.size());
-			std::cout << "Файл успешно дешифрован." << std::endl;
-		} else {
-			std::cout << "Ошибка при дешифровании." << std::endl;
-		}
-	} catch (const std::exception& e) {
-		std::cout << "Ошибка: " << e.what() << std::endl;
-	}
-
-	std::cout << "Нажмите Enter для продолжения...";
-	std::cin.ignore();
-	std::cin.get();
-
-
 	bool funcRunning = true;
+	bool isInvalid = false;
 	while (funcRunning) {
+		clearConsole();
+		art();
+		std::cout << R"(
+	Дешифровать:
+	1. Выход;
+	2. Шифр Вернама;
+	3. Шифр Вижинера;
+	0. Автодешифровка.
+	)";
 
-	} // конец декода
+		std::cout << std::endl << std::endl << R"(      )";
+		if(isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
+
+		std::cout << "Ожидание ввода: ";
+		int userInput;
+		std::cin >> userInput; //НЕ ЗАБЫТЬ ЗДЕСЬ СДЕЛАТЬ ОТЛОВ ЭКСЕПШЕНА НА НЕ ЧИСЛО
+		decodeOptions choice = static_cast<decodeOptions>(userInput);
+		switch (choice) {
+			case decodeOptions::vernam: {
+				Vernam vernamObject;
+				std::wstring text = L"nstu";
+				std::wstring key = L"ndlbkj";
+				std::wstring encrypted = vernamObject.EncryptOrDecryptText(text, key);
+				break;
+				}
+			case decodeOptions::vigenere:
+				std::cout << "vigenere";
+				break;
+			case decodeOptions::autoDec:
+				break;
+			case decodeOptions::exit:
+				funcRunning = false;
+				break;
+			default:
+				isInvalid = true;
+				break;
+		} //конец свича
+	}//конец цикла
 }
 //=============================================================================== эбаут
 void seqAbout() {
 	clearConsole();
+	art();
 	std::cout << R"(
 			О программе.
 
@@ -220,52 +203,12 @@ void seqAbout() {
 		     Участники проекта.
 
 	Рыбальченко "JSMblWb" Дмитрий - шифр двойной перестановки, TEA;
-	Юрченко "tascarit" Василий - ;
+	Юрченко "tascarit" Василий - шифр Вернама, шифр Виженера;
 	Оськин "destroyer1273" Матвей - ;
 	Холодная "freezingg" Алина - ;
 		
 	Для выхода введите 1: )";
 	int waiter; //ПОТОМ ПЕРЕДЕЛАТЬ ЭТО
 	std::cin >> waiter;
-}
-//=============================================================================== загрузка либ
-bool loadCipherLibrary(const char* libPath) {
-	void* handle = dlopen(libPath, RTLD_LAZY);
-	if (!handle) {
-		std::cerr << "Невозможно открыть библиотеку: " << dlerror() << std::endl;
-		return false;
-	}
-    
-	//очищаем ошибки
-	dlerror();
-
-	//загружаем функции
-	encrypt = (EncryptFunc)dlsym(handle, "encrypt");
-	const char* dlsym_error = dlerror();
-	if (dlsym_error) {
-		std::cerr << "Cannot load symbol encrypt: " << dlsym_error << std::endl;
-		return false;
-	}
-
-	decrypt = (DecryptFunc)dlsym(handle, "decrypt");
-	dlsym_error = dlerror();
-	if (dlsym_error) {
-		std::cerr << "Cannot load symbol decrypt: " << dlsym_error << std::endl;
-		return false;
-	}
-
-	init_cipher = (InitFunc)dlsym(handle, "init_cipher");
-	//init_cipher может быть опциональной
-
-	return true;
-}
-//=============================================================================== ридфайл
-std::vector<unsigned char> readFile(const std::string& filename) {
-	std::ifstream file(filename, std::ios::binary);
-	if (!file) {
-		throw std::runtime_error("Cannot open file: " + filename);
-	}
-
-	return std::vector<unsigned char>(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 }
 //=============================================================================== viva la uten
