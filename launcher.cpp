@@ -1,5 +1,7 @@
 #include <iostream>
+#include <utility>
 #include <string>
+#include <filesystem>
 #include "./ciphers/vernam/vernam.h"
 
 void clearConsole();
@@ -7,8 +9,7 @@ void art();
 void seqEncode();
 void seqDecode();
 void seqAbout();
-bool loadCipherLibrary(const char* libPath);
-std::vector<unsigned char> readFile(const std::string& filename);
+std::pair<std::string, std::string> seqPaths();
 
 enum class startOptions {
 	encode = 1,
@@ -18,7 +19,6 @@ enum class startOptions {
 };
 
 enum class encodeOptions{
-	swTail = 0,
 	exit = 1,
 	vernam = 2,
 	vigenere = 3
@@ -26,7 +26,6 @@ enum class encodeOptions{
 };
 
 enum class decodeOptions{
-	autoDec = 0,
 	exit = 1,
 	vernam = 2,
 	vigenere = 3
@@ -48,7 +47,7 @@ int main() {
 	4. Выход.
 		)" << std::endl << R"(	)";
 
-		if(isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
+		if (isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
 
 		std::cout << "Ожидание ввода: ";
 		int userInput;
@@ -99,7 +98,9 @@ void art() {
 void seqEncode() {
 	bool funcRunning = true;
 	bool isInvalid = false;
-	bool isTailOn = true;
+	bool isSuccesful = false;
+	std::pair<std::string, std::string> paths = seqPaths();
+
 	while (funcRunning) {
 		clearConsole();
 		art();
@@ -108,43 +109,48 @@ void seqEncode() {
 	1. Выход;
 	2. Шифр Вернама;
 	3. Шифр Вижинера;
-	)";
-	isTailOn ? std::cout << "0. Выключить генерацию хвоста для авто дешифровки" : std::cout << "0. Включить генерацию хвоста для авто дешифровки";
 
-		std::cout << std::endl << std::endl << R"(	)";
-		if(isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
+	)";
+		if (isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
+		if (isSuccesful) std::cout << "Шифровка выполнена успешно. ", isSuccesful = false;
 
 		std::cout << "Ожидание ввода: ";
 		int userInput;
 		std::cin >> userInput; //НЕ ЗАБЫТЬ ЗДЕСЬ СДЕЛАТЬ ОТЛОВ ЭКСЕПШЕНА НА НЕ ЧИСЛО
+
 		encodeOptions choice = static_cast<encodeOptions>(userInput);
 		switch (choice) {
 			case encodeOptions::vernam: {
+				const std::string keyPath = "./keyVernam";
 				Vernam vernamObject;
-				std::wstring text = L"nstu";
-				std::wstring key = L"ndlbkj";
-				std::wstring encrypted = vernamObject.EncryptOrDecryptText(text, key);
+				//вот здесь бы спросить длину пути
+				//vernamObject.ByteFileKeyGenerator(keyPath, 32);
+				//vernamObject.EncryptOrDecryptBinary(paths.first, paths.second, "./keyVernam");
+				isSuccesful = true;
 				break;
-				}
+			}
+
 			case encodeOptions::vigenere:
 				std::cout << "vigenere";
 				break;
-			case encodeOptions::swTail:
-				isTailOn ? isTailOn = false : isTailOn = true;
-				break;
+
 			case encodeOptions::exit:
 				funcRunning = false;
 				break;
+
 			default:
 				isInvalid = true;
 				break;
-                } //конец свича
+		} //конец свича
 	}//конец цикла
 }
 //=============================================================================== декод
 void seqDecode() {
 	bool funcRunning = true;
 	bool isInvalid = false;
+	bool isSuccesful = false;
+	std::pair<std::string, std::string> paths = seqPaths();
+
 	while (funcRunning) {
 		clearConsole();
 		art();
@@ -153,32 +159,31 @@ void seqDecode() {
 	1. Выход;
 	2. Шифр Вернама;
 	3. Шифр Вижинера;
-	0. Автодешифровка.
 	)";
 
 		std::cout << std::endl << std::endl << R"(      )";
-		if(isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
+		if (isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
+		if (isSuccesful) std::cout << "Дешифровка выполнена успешно. ", isSuccesful = false;
 
 		std::cout << "Ожидание ввода: ";
 		int userInput;
 		std::cin >> userInput; //НЕ ЗАБЫТЬ ЗДЕСЬ СДЕЛАТЬ ОТЛОВ ЭКСЕПШЕНА НА НЕ ЧИСЛО
+
 		decodeOptions choice = static_cast<decodeOptions>(userInput);
 		switch (choice) {
 			case decodeOptions::vernam: {
 				Vernam vernamObject;
-				std::wstring text = L"nstu";
-				std::wstring key = L"ndlbkj";
-				std::wstring encrypted = vernamObject.EncryptOrDecryptText(text, key);
 				break;
 				}
+
 			case decodeOptions::vigenere:
 				std::cout << "vigenere";
 				break;
-			case decodeOptions::autoDec:
-				break;
+
 			case decodeOptions::exit:
 				funcRunning = false;
 				break;
+
 			default:
 				isInvalid = true;
 				break;
@@ -210,5 +215,26 @@ void seqAbout() {
 	Для выхода введите 1: )";
 	int waiter; //ПОТОМ ПЕРЕДЕЛАТЬ ЭТО
 	std::cin >> waiter;
+}
+//=============================================================================== спрашиватель пути
+std::pair<std::string, std::string> seqPaths() {
+	bool isInvalid = false;
+	while (true) {
+		clearConsole();
+		art();
+		std::cout << R"(
+	Введите полный или относительный (с началом .) путь до желаемого файла.
+
+	)";
+		if (isInvalid) std::cout << "Такого файла не существует. ", isInvalid = false;
+		std::cout << "Ожидание ввода: ";
+		std::string inputPath, outputPath;
+		std::cin >> inputPath;
+		if (std::filesystem::exists(inputPath)) {
+			size_t pos = inputPath.rfind('/') + 1;
+			outputPath = inputPath.insert(pos, "cd-handled-");
+			return {inputPath, outputPath};
+		} else isInvalid = true;
+	}
 }
 //=============================================================================== viva la uten
