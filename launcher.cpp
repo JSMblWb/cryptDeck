@@ -131,14 +131,15 @@ void generateKey(){
 		clearConsole();
 		art();
 
-		std::cout << "1. Выход\n2. Шифр Вернама\n3. Шифр Виженера\n4. Шифр двойной перестановки\n5. TEA\n\nВаш выбор: ";
-		std::cin >> choice;
+		std::cout << "1. Выход\n2. Шифр Вернама\n3. Шифр Виженера\n4. Шифр двойной перестановки\n5. TEA\n\n";
+		correctInput("Ваш выбор: ", choice);
+
 			if (choice == 1)
 				running = false;
 			if (choice == 2 || choice == 3 || choice == 4 || choice == 5){
 				int mode;
-				std::cout << "1. Выход\n2. Текстовый ключ\n 3. Файл-ключ\n\nВаш выбор: ";
-				std::cin >> mode;
+				std::cout << "1. Выход\n2. Текстовый ключ\n 3. Файл-ключ\n\n";
+				correctInput("Ваш выбор: ", mode);
 
 				switch (mode){
 					case 1:
@@ -684,9 +685,10 @@ void seqAbout() {
 	Холодная "freezingg" Алина - ;
 	Юрченко "tascarit" Василий - шифр Вернама, шифр Вижинера.
 		
-	Для выхода введите 1: )";
-	int waiter; //ПОТОМ ПЕРЕДЕЛАТЬ ЭТО
-	std::cin >> waiter;
+	Для выхода введите любой символ: )";
+	
+	int exit;
+	std::cin >> exit;
 }
 
 void getPath(const std::string& question, std::string &out){
