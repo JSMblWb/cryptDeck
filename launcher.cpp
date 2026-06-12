@@ -6,19 +6,9 @@
 #include <thread>
 #include <chrono>
 
+#include "keygen.h"
 #include "./ciphers/vernam/vernam.h"
 #include "./ciphers/vigenere/vigenere.h"
-
-template <typename T>
-
-void correctInput(std::string q, T& out);
-void clearConsole();
-void art();
-void seqEncode(useType type);
-void seqDecode(useType type);
-void seqAbout();
-void generateKey();
-std::pair<std::string, std::string> seqPaths();
 
 enum class useType {
 	file = 0,
@@ -47,6 +37,17 @@ enum class decodeOptions{
 	vernam = 2,
 	vigenere = 3
 };
+
+template <typename T>
+void correctInput(std::string q, T& out);
+void clearConsole();
+void art();
+void seqEncode(useType type);
+void seqDecode(useType type);
+void seqAbout();
+void generateKey();
+std::pair<std::string, std::string> seqPaths();
+
 
 //=============================================================================== мэйн
 int main() {
