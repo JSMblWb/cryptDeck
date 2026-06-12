@@ -139,11 +139,11 @@ int TEA::cipherFunc(int mode, std::string keyHex, std::string inFile, std::strin
 	}
 
 	try {
-		std::vector<uint8_t> input = read_file(in_file);
+		std::vector<uint8_t> input = readFile(inFile);
 
 		if (mode == 0) {
 			std::vector<uint8_t> output = cbcEncrypt(input, key);
-			loadFile(out_file, output);
+			exportFile(outFile, output);
 			std::cout << "Шифровка завершена.\n";
 		} else if (mode == 1) {
 			std::vector<uint8_t> output = cbcDecrypt(input, key);

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <utility>
 #include <string>
 #include <filesystem>
@@ -10,6 +11,7 @@
 #include "./ciphers/vernam/vernam.h"
 #include "./ciphers/vigenere/vigenere.h"
 #include "./ciphers/double-transposition/double-transposition.h"
+#include "./ciphers/tea/tea.h"
 
 enum class useType {
 	file = 0,
@@ -129,11 +131,11 @@ void generateKey(){
 		clearConsole();
 		art();
 
-		std::cout << "1. Выход\n2. Шифр Вернама\n3. Шифр Виженера\n4. Шифр двойной перестановки\n\nВаш выбор: ";
+		std::cout << "1. Выход\n2. Шифр Вернама\n3. Шифр Виженера\n4. Шифр двойной перестановки\n5. TEA\n\nВаш выбор: ";
 		std::cin >> choice;
 			if (choice == 1)
 				running = false;
-			if (choice == 2 || choice == 3 || choice == 4){
+			if (choice == 2 || choice == 3 || choice == 4 || choice == 5){
 				int mode;
 				std::cout << "1. Выход\n2. Текстовый ключ\n 3. Файл-ключ\n\nВаш выбор: ";
 				std::cin >> mode;
@@ -202,7 +204,7 @@ void generateKey(){
 			}
 	}
 }
-
+//=============================================================================== проверяльщик ввода
 template <typename T>
 void correctInput(std::string question, T& out){
 	std::cout << question;
@@ -229,6 +231,7 @@ void seqEncode(useType type) {
 	2. Шифр Вернама;
 	3. Шифр Виженера;
 	4. Шифр двойной перестановки;
+	5. TEA;
 	)";
 		if (isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
 		if (isSuccesful) std::cout << "Шифрование выполнено успешно. ", isSuccesful = false;
@@ -238,6 +241,7 @@ void seqEncode(useType type) {
 
 		encodeOptions choice = static_cast<encodeOptions>(userInput);
 		switch (choice) {
+			//======================================================= вернам
 			case encodeOptions::vernam: {
 				if (type == useType::file){
 					std::string outPath;
@@ -305,7 +309,7 @@ void seqEncode(useType type) {
 				}
 				break;
 			}
-
+			//======================================================= виженер
 			case encodeOptions::vigenere: {
 				if (type == useType::file){
 					std::string path;
@@ -368,6 +372,7 @@ void seqEncode(useType type) {
 
 				break;
 			}
+			//======================================================= дабл транспозишн
 			case encodeOptions::doubleTransposition: {
 				if (type == useType::file){
 					std::string inPath;
@@ -424,7 +429,35 @@ void seqEncode(useType type) {
 
 				break;
 			}
+			//======================================================= чай
+			case encodeOptions::tea: {
+				std::string path;
+				std::string outPath;
+				std::string keyPath;
 
+				getPath("Введите путь к файлу, который требуется зашифровать: ", path);
+				correctInput("Введите путь для записи файла: ", outPath);
+				getPath("Введите путь к файлу-ключу: ", keyPath);
+
+				try {
+					TEA tea;
+					KEYGEN keygen;
+
+					keygen.hex32Key();
+					ifstream key("hex32Key");
+
+					tea.cipherFunc(0, key, path, outPath);
+
+					std::cout << "Файл успешно зашифрован по пути: " << outPath << std::endl;
+					std::this_thread::sleep_for(std::chrono::seconds(3));
+				} catch (const std::runtime_error &e) {
+					std::cout << "Ошибка: " << e.what() << std::endl;
+					std::this_thread::sleep_for(std::chrono::seconds(3));
+				}
+
+				break;
+                        }
+			//======================================================= выход
 			case encodeOptions::exit:
 				funcRunning = false;
 				break;

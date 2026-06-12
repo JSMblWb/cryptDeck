@@ -1,5 +1,6 @@
 #include "keygen.h"
 
+//================================================= текстовый ключ
 std::wstring KEYGEN::textKey(size_t length, bool isLatin){
     const std::wstring latinCharset = L"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     const std::wstring ruCharset = L"0123456789АБВГДЕЁЖЗИКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзиклмнопрстуфхцчшщъыьэюя";
@@ -24,7 +25,7 @@ std::wstring KEYGEN::textKey(size_t length, bool isLatin){
 
     return key;
 }
-
+//================================================= байтник
 void KEYGEN::byteFileKey(std::string& path, size_t length){
     if (length == 0)
         throw std::runtime_error("Длина ключа не может быть равна нулю");
@@ -53,4 +54,20 @@ void KEYGEN::byteFileKey(std::string& path, size_t length){
     std::cout << "Файл с ключом находится по адресу: " << path << std::endl;
 
     out.close();
+}
+//================================================= 32 хекс
+int KEYGEN::hex32Key() {
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<uint32_t> dis(0, UINT32_MAX);
+
+	std::ofstream file("hex32Key");
+    
+	for (int i = 0; i < 100; i++) {
+		file << std::hex << std::setw(8) << std::setfill('0') << dis(gen) << "\n";
+	}
+
+	file.close();
+
+	return 0;
 }
