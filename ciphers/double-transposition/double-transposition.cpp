@@ -1,4 +1,7 @@
-#include <double-transposition.h>
+#include "double-transposition.h"
+
+void exportFile(const std::string& binaryData, const std::filesystem::path& destination);
+std::string loadFile(const std::string& path);
 
 //================================================= порядок столбцов для ключа
 std::vector<int> getColumnOrder(const std::string& key) {
@@ -8,7 +11,7 @@ std::vector<int> getColumnOrder(const std::string& key) {
 	}
 	std::sort(indexed.begin(), indexed.end());
 	std::vector<int> order;
-	for (const pair<char, int> p : indexed) {
+	for (const std::pair<char, int> p : indexed) {
 		order.push_back(p.second);
 	}
 	return order;
@@ -73,39 +76,65 @@ std::string singleDecrypt(const std::string& cipher, const std::string& key) {
 	return plain;
 }
 //================================================== двойной шифр бинарник
-void doubleEncrypt(const std::string& inputPath, const std::string& outputPath) {
-	std::string key1 = exportFile("keyDT1"), key2 = exportFile("keyDT2");
+void DT::doubleEncrypt(const std::string& inputPath, const std::string& outputPath, const std::string& key1Path, const std::string& key2Path) {
+	std::string key1 = loadFile(key1Path), key2 = loadFile(key2Path);
 	std::string binaryNotEncrypted = loadFile(inputPath);
 	std::string binaryEncryptedOnce = singleEncrypt(binaryNotEncrypted, key1);
 	exportFile(singleEncrypt(binaryEncryptedOnce, key2), outputPath);
 }
 
 //================================================= двойной дешифр бинарник
-void doubleDecrypt(const std::string& inputPath, const std::string outputPath) {
-	std::string key1 = exportFile("keyDT1"), key2 = exportFile("keyDT2");
+void DT::doubleDecrypt(const std::string& inputPath, const std::string& outputPath, const std::string& key1Path, const std::string& key2Path) {
+	std::string key1 = loadFile(key1Path), key2 = loadFile(key2Path);
 	std::string binaryNotDecrypted = loadFile(inputPath);
-	std::string binaryDecryptedOnce = singleDecrypt(binaryNotEncrypted, key2);
+	std::string binaryDecryptedOnce = singleDecrypt(binaryNotDecrypted, key2);
 	exportFile(singleDecrypt(binaryDecryptedOnce, key1), outputPath);
 }
+
+//================================================= двойной шифр текст
+std::string DT::doubleEncryptText(const std::string& text, const std::string& key1, const std::string& key2){
+	std::string textEncryptedOnce = singleEncrypt(text, key1);
+	std::string textEncryptedTwice = singleEncrypt(textEncryptedOnce, key2);
+
+	return textEncryptedTwice;
+}
+
+//================================================= двойной дешифр текст
+std::string DT::doubleDecryptText(const std::string& text, const std::string& key1, const std::string& key2){
+	std::string textDecryptedOnce = singleDecrypt(text, key2);
+	std::string textDecryptedTwice = singleDecrypt(textDecryptedOnce, key1);
+
+	return textDecryptedTwice;
+}
+
 //================================================= читалка путей
 std::string loadFile(const std::string& filePath) {
 	//открываем поток в бинарном инпут режиме
 	std::ifstream file(filePath, std::ios::binary | std::ios::ate);
 
+	if (!file.is_open())
+		throw std::runtime_error("Ошибка открытия файла");
+
 	//узнаём размер файла
 	std::streamsize size = file.tellg();
 	file.seekg(0, std::ios::beg);
 
-	//переводим в вектор
-	std::string buffer(size);
+	//переводим в строку
+	std::string buffer(0, size);
 	if (file.read(buffer.data(), size)) {
 		return buffer;
+	} else {
+		throw std::runtime_error("Ошибка чтения файла");
 	}
 }
+
 //================================================= заполнялка по путям
 void exportFile(const std::string& binaryData, const std::filesystem::path& destination) {
 	//открываем поток в бинарном аутпут режиме
 	std::ofstream outFile(destination, std::ios::out);
+
+	if (!outFile.is_open())
+		throw std::runtime_error("Ошибка открытия файла");
 
 	//записываем файлы и их длину
 	outFile.write(binaryData.data(), binaryData.size());
