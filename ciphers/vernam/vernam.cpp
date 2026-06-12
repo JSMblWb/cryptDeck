@@ -3,6 +3,9 @@
 std::wstring Vernam::EncryptOrDecryptText(const std::wstring& text, const std::wstring& key){
     std::wstring out = std::wstring(text.size(), 0);
 
+	if (key.size() == 0 || text.size() == 0)
+		throw std::runtime_error("Длина ключа или текста равна нулю");
+
     if (key.size() < text.size())
         throw std::runtime_error("Длина ключа меньше длины текста");
 
@@ -21,6 +24,9 @@ std::wstring Vernam::TextKeyGenerator(size_t length, bool isLatin){
     std::uniform_int_distribution<> distribution;
     std::wstring key;
 
+	if (length == 0)
+		throw std::runtime_error("Длина генерируемого ключа не может быть равна нулю");
+
     if (isLatin)
         distribution = std::uniform_int_distribution<>(0, latinCharset.size()-1);
     else
@@ -37,7 +43,7 @@ std::wstring Vernam::TextKeyGenerator(size_t length, bool isLatin){
 
 void Vernam::ByteFileKeyGenerator(std::string& path, size_t length){
     if (length == 0)
-        throw std::runtime_error("Длина ключа должна быть больше 0");
+        throw std::runtime_error("Длина ключа не может быть равна нулю");
 
     std::ofstream out(path, std::ios::binary);
 
@@ -94,10 +100,10 @@ void Vernam::EncryptOrDecryptTextFile(const std::string& path, const std::string
     out.close();
 }
 
-void Vernam::EncryptOrDecryptBinary(const std::string& path, const std::string& out_path, const std::string& key_path){
-    std::ifstream key(key_path, std::ios::binary);
+void Vernam::EncryptOrDecryptBinary(const std::string& path, const std::string& outPath, const std::string& keyPath){
+    std::ifstream key(keyPath, std::ios::binary);
     std::ifstream in(path, std::ios::binary);;
-    std::ofstream out(out_path, std::ios::binary);
+    std::ofstream out(outPath, std::ios::binary);
     size_t i = 0;
 
     if (!in.is_open() || !key.is_open() || !out.is_open())

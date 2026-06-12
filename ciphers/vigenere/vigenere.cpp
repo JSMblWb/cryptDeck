@@ -3,6 +3,9 @@
 std::wstring Vigenere::EncryptText(const std::wstring& text, const std::wstring& key){
     std::wstring out = std::wstring(text.size(), 0);
 
+	if (text.size() == 0 || key.size() == 0)
+		throw std::runtime_error("Длина текста или ключа равна нулю");
+
     for (int i = 0; i < text.size(); i++){
         out[i] = Encrypt(text[i], key[i % key.size()]);
     }
@@ -13,6 +16,9 @@ std::wstring Vigenere::EncryptText(const std::wstring& text, const std::wstring&
 std::wstring Vigenere::DecryptText(const std::wstring& encrypted, const std::wstring& key){
     std::wstring out = std::wstring(encrypted.size(), 0);
     
+	if (encrypted.size() == 0 || key.size() == 0)
+		throw std::runtime_error("Длина текста или ключа равна нулю");
+
     for (int i = 0; i < encrypted.size(); i++){
         out[i] = Decrypt(encrypted[i], key[i % key.size()]);
     }
@@ -27,6 +33,9 @@ std::wstring Vigenere::KeyGenerator(size_t length, bool isLatin){
     std::mt19937 generator(rd());
     std::uniform_int_distribution<> distribution;
     std::wstring key;
+	
+	if (length == 0)
+		throw std::runtime_error("Длина генерируемого ключа не может быть равна нулю");
 
     if (isLatin)
         distribution = std::uniform_int_distribution<>(0, latinCharset.size()-1);
@@ -145,7 +154,7 @@ void Vigenere::DecryptBinary(const std::string& path, const std::string& out_pat
 
 void Vigenere::ByteFileKeyGenerator(std::string&path, size_t length){
     if (length == 0)
-        throw std::runtime_error("Длина ключа должна быть больше 0");
+        throw std::runtime_error("Длина ключа не может быть равна нулю");
 
     std::ofstream out(path, std::ios::binary);
 
