@@ -76,16 +76,16 @@ std::string singleDecrypt(const std::string& cipher, const std::string& key) {
 	return plain;
 }
 //================================================== двойной шифр бинарник
-void DT::doubleEncrypt(const std::string& inputPath, const std::string& outputPath) {
-	std::string key1 = loadFile("keyDT1"), key2 = loadFile("keyDT2");
+void DT::doubleEncrypt(const std::string& inputPath, const std::string& outputPath, const std::string& key1Path, const std::string& key2Path) {
+	std::string key1 = loadFile(key1Path), key2 = loadFile(key2Path);
 	std::string binaryNotEncrypted = loadFile(inputPath);
 	std::string binaryEncryptedOnce = singleEncrypt(binaryNotEncrypted, key1);
 	exportFile(singleEncrypt(binaryEncryptedOnce, key2), outputPath);
 }
 
 //================================================= двойной дешифр бинарник
-void DT::doubleDecrypt(const std::string& inputPath, const std::string& outputPath) {
-	std::string key1 = loadFile("keyDT1"), key2 = loadFile("keyDT2");
+void DT::doubleDecrypt(const std::string& inputPath, const std::string& outputPath, const std::string& key1Path, const std::string& key2Path) {
+	std::string key1 = loadFile(key1Path), key2 = loadFile(key2Path);
 	std::string binaryNotDecrypted = loadFile(inputPath);
 	std::string binaryDecryptedOnce = singleDecrypt(binaryNotDecrypted, key2);
 	exportFile(singleDecrypt(binaryDecryptedOnce, key1), outputPath);

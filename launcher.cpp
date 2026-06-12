@@ -41,8 +41,7 @@ void seqEncode(useType type);
 void seqDecode(useType type);
 void seqAbout();
 void generateKey();
-std::pair<std::string, std::string> seqPaths();
-
+void getPath(const std::string& question, std::string& out);
 
 //=============================================================================== мэйн
 int main() {
@@ -65,9 +64,10 @@ int main() {
 
 		if (isInvalid) std::cout << "Некорректный ввод. ", isInvalid = false;
 
-		std::cout << "Ожидание ввода: ";
 		int userInput;
-		std::cin >> userInput; //НЕ ЗАБЫТЬ ЗДЕСЬ СДЕЛАТЬ ОТЛОВ ЭКСЕПШЕНА НА НЕ ЧИСЛО
+		
+		correctInput("Ожидание ввода: ", userInput);
+
 		startOptions choice = static_cast<startOptions>(userInput);
 		switch (choice) {
 			case startOptions::encode:
@@ -179,7 +179,7 @@ void generateKey(){
 						std::string path;
 		
 						correctInput("Введите длину ключа в байтах: ", length);
-						correctInput("Введите путь для записи файла: ", path);
+						getPath("Введите путь для записи файла: ", path);
 
 						try {
 							KEYGEN keyGen;
@@ -234,7 +234,7 @@ void seqEncode(useType type) {
 		if (isSuccesful) std::cout << "Шифрование выполнено успешно. ", isSuccesful = false;
 
 		int userInput;
-		correctInput("Ожидание ввода", userInput);
+		correctInput("Ожидание ввода: ", userInput);
 
 		encodeOptions choice = static_cast<encodeOptions>(userInput);
 		switch (choice) {
@@ -244,9 +244,9 @@ void seqEncode(useType type) {
 					std::string inPath;
 					std::string keyPath;
 
-					correctInput("Введите путь к файлу, который требуется зашифровать: ", inPath);
+					getPath("Введите путь к файлу, который требуется зашифровать: ", inPath);
 					correctInput("Введите путь для записи файла: ", outPath);
-					correctInput("Введите путь к файлу-ключу: ", keyPath);
+					getPath("Введите путь к файлу-ключу: ", keyPath);
 
 					std::cout << std::endl;
 
@@ -312,9 +312,9 @@ void seqEncode(useType type) {
 					std::string outPath;
 					std::string keyPath;
 
-					correctInput("Введите путь к файлу, который требуется зашифровать: ", path);
+					getPath("Введите путь к файлу, который требуется зашифровать: ", path);
 					correctInput("Введите путь для записи файла: ", outPath);
-					correctInput("Введите путь к файлу-ключу: ", keyPath);
+					getPath("Введите путь к файлу-ключу: ", keyPath);
 
 					try {
 						Vigenere vigenere;
@@ -372,14 +372,18 @@ void seqEncode(useType type) {
 				if (type == useType::file){
 					std::string inPath;
 					std::string outPath;
+					std::string key1Path;
+					std::string key2Path;
 
-					correctInput("Введите путь к файлу, который требуется зашифровать: ", inPath);
+					getPath("Введите путь к файлу, который требуется зашифровать: ", inPath);
 					correctInput("Введите путь для записи файла", outPath);
+					getPath("Введите путь к первому файлу-ключу: ", key1Path);
+					getPath("Введите путь ко второму файлу-ключу: ", key2Path);
 
 					try {
 						DT dt;
 
-						dt.doubleEncrypt(inPath, outPath);
+						dt.doubleEncrypt(inPath, outPath, key1Path, key2Path);
 
 						std::cout << "Файл успешно зашифрован по пути: " << outPath << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -464,9 +468,9 @@ void seqDecode(useType type) {
 					std::string outPath;
 					std::string keyPath;
 
-					correctInput("Введите путь к зашифрованному файлу: ", inPath);
+					getPath("Введите путь к зашифрованному файлу: ", inPath);
 					correctInput("Введите путь для записи файла: ", outPath);
-					correctInput("Введите путь к файлу-ключу: ", keyPath);
+					getPath("Введите путь к файлу-ключу: ", keyPath);
 
 					try {
 						Vernam vernamObject;
@@ -519,9 +523,9 @@ void seqDecode(useType type) {
 					std::string outPath;
 					std::string keyPath;
 
-					correctInput("Введите путь к зашифрованному файлу: ", inPath);
+					getPath("Введите путь к зашифрованному файлу: ", inPath);
 					correctInput("Введите путь для записи файла: ", outPath);
-					correctInput("Введите путь к файлу-ключу: ", keyPath);
+					getPath("Введите путь к файлу-ключу: ", keyPath);
 
 					try {
 						Vigenere vigenere;
@@ -592,14 +596,18 @@ void seqDecode(useType type) {
 				} else if (type == useType::file){
 					std::string inPath;
 					std::string outPath;
+					std::string key1Path;
+					std::string key2Path;
 
-					correctInput("Введите путь к файлу, который требуется дешифровать: ", inPath);
+					getPath("Введите путь к файлу, который требуется дешифровать: ", inPath);
 					correctInput("Введите путь для записи файла: ", outPath);
+					getPath("Введите путь к первому файлу-ключу: ", key1Path);
+					getPath("Введите путь ко второму файлу-ключу: ", key2Path);
 
 					try {
 						DT dt;
 
-						dt.doubleDecrypt(inPath, outPath);
+						dt.doubleDecrypt(inPath, outPath, key1Path, key2Path);
 
 						std::cout << "Файл успешно расшифрован по пути: " << outPath << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -647,25 +655,12 @@ void seqAbout() {
 	int waiter; //ПОТОМ ПЕРЕДЕЛАТЬ ЭТО
 	std::cin >> waiter;
 }
-//=============================================================================== спрашиватель пути
-std::pair<std::string, std::string> seqPaths() {
-	bool isInvalid = false;
-	while (true) {
-		clearConsole();
-		art();
-		std::cout << R"(
-	Введите полный или относительный (с началом .) путь до желаемого файла.
 
-	)";
-		if (isInvalid) std::cout << "Такого файла не существует. ", isInvalid = false;
-		std::cout << "Ожидание ввода: ";
-		std::string inputPath, outputPath;
-		std::cin >> inputPath;
-		if (std::filesystem::exists(inputPath)) {
-			size_t pos = inputPath.rfind('/') + 1;
-			outputPath = inputPath.insert(pos, "cd-handled-");
-			return {inputPath, outputPath};
-		} else isInvalid = true;
+void getPath(const std::string& question, std::string &out){
+	correctInput(question, out);
+	while(!(std::filesystem::exists(out))) {
+		std::cout << "Некорректный путь. ";
+		correctInput(question, out);
 	}
 }
 //=============================================================================== viva la uten

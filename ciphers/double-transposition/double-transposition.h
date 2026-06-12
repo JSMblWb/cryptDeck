@@ -22,8 +22,8 @@
 
 class EXPORT DT {
 	public:
-	void doubleEncrypt(const std::string& inputPath, const std::string& outputPath);
-	void doubleDecrypt(const std::string& inputPath, const std::string& outputPath);
+	void doubleEncrypt(const std::string& inputPath, const std::string& outputPath, const std::string& key1, const std::string& key2);
+	void doubleDecrypt(const std::string& inputPath, const std::string& outputPath, const std::string& key1, const std::string& key2);
 
 	std::string doubleEncryptText(const std::string& text, const std::string& key1, const std::string& key2);
 	std::string doubleDecryptText(const std::string& text, const std::string& key1, const std::string& key2);
