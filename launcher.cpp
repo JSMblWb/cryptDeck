@@ -471,24 +471,20 @@ void seqEncode(useType type) {
 					std::string path;
 					std::string outPath;
 					std::string keyPath;
+					std::ifstream keyFile;
+					std::stringstream keyHex;
 
 					getPath("Введите путь к файлу, который требуется зашифровать: ", path);
 					correctInput("Введите путь для записи файла: ", outPath);
 					getPath("Введите путь к файлу-ключу: ", keyPath);
 
+					keyFile.open(keyPath, std::ios::in);
+					keyHex << keyFile.rdbuf();
+
 					try {
 						TEA tea;
-						KEYGEN keygen;
-						std::string keyPath;
-						std::ifstream keyFile;
-						std::string keyHex;
 
-						getPath("Введите путь к файлу-ключу: ", keyPath);
-					
-						keyFile.open(keyPath, std::ios::in);
-						keyFile >> keyHex;
-
-						tea.cipherFunc(0, keyHex, path, outPath);
+						tea.cipherFunc(0, keyHex.str(), path, outPath);
 
 						std::cout << "Файл успешно зашифрован по пути: " << outPath << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -505,7 +501,7 @@ void seqEncode(useType type) {
 					getPath("Введите путь к файлу-ключу: ", keyPath);
 					correctInput("Введите текст для шифрования: ", text);
 					
-					keyFile.open(keyPath);
+					keyFile.open(keyPath, std::ios::in);
 					keyFile >> keyHex;
 
 					try {
