@@ -320,7 +320,7 @@ void seqEncode(useType type) {
 
 						isSuccesful = true;
 
-						std::this_thread::sleep_for(std::chrono::seconds(5));
+						std::this_thread::sleep_for(std::chrono::seconds(3));
 					} catch (const std::runtime_error &e) {
 						std::cerr << "Ошибка: " << e.what() << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -382,7 +382,7 @@ void seqEncode(useType type) {
 
 						std::cout << "\n";
 
-						std::this_thread::sleep_for(std::chrono::seconds(5));
+						std::this_thread::sleep_for(std::chrono::seconds(3));
 					} catch (const std::runtime_error &e) {
 						std::cout << "Ошибка: " << e.what() << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
