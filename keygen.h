@@ -24,5 +24,6 @@ class EXPORT KEYGEN{
     public:
     std::wstring textKey(size_t length, bool isLatin);
     void byteFileKey(std::string& path, size_t length);
+	int hex32Key(const std::string& path);
 };
 

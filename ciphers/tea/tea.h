@@ -23,4 +23,5 @@
 class EXPORT TEA {
 	public:
 	int cipherFunc(int mode, std::string keyHex, std::string inFile, std::string outFile);
-}
+	std::string cipherFuncText(int mode, std::string keyHex, std::string text);
+};

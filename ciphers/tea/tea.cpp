@@ -22,7 +22,7 @@ void decryptBlock(uint32_t& v0, uint32_t& v1, const uint32_t key[4]) {
 }
 //================================================= конвертация hex-строки в 128-битный ключ 4 x uint32_t, little-endian порядок байт
 bool parseKey(const std::string& hex, uint32_t key[4]) {
-	if (hex.length() != 32) return false;
+	if (hex.length() != 32*8) return false;
 	for (int i = 0; i < 4; ++i) {
 		std::string part = hex.substr(i * 8, 8);
 		try {
@@ -60,7 +60,7 @@ std::vector<uint8_t> cbcEncrypt(const std::vector<uint8_t>& plain, const uint32_
 	std::memcpy(iv.data(), &random_iv, 8);
 
 	//дополнение открытого текста
-	std::vector<uint8_t> padded = pkcs7_pad(plain, 8);
+	std::vector<uint8_t> padded = pkcs7Pad(plain, 8);
 	std::vector<uint8_t> cipher(padded.size() + 8); //место для IV
 	std::copy(iv.begin(), iv.end(), cipher.begin());
 
@@ -117,13 +117,21 @@ std::vector<uint8_t> cbcDecrypt(const std::vector<uint8_t>& cipher, const uint32
 		prev0 = v0;
 		prev1 = v1;
 	}
+	
+	try {
+		std::vector<uint8_t> unpadded = pkcs7Unpad(padded);
 
-	return pkcs7Unpad(padded);
+		return unpadded;
+	} catch (const std::runtime_error &e) {
+		std::cout << "Ошибка: " << e.what() << std::endl;
+	}
+
+	return padded;
 }
 //================================================= читалка файлов
 std::vector<uint8_t> loadFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::binary);
-	return std::vector<uint8_t>((std::istreambuf_terator<char>(file)), std::istreambuf_iterator<char>());
+	return std::vector<uint8_t>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 }
 //================================================= записывалка файлов
 void exportFile(const std::string& filename, const std::vector<uint8_t>& data) {
@@ -133,13 +141,12 @@ void exportFile(const std::string& filename, const std::vector<uint8_t>& data) {
 //================================================= основная функция
 int TEA::cipherFunc(int mode, std::string keyHex, std::string inFile, std::string outFile) {
 	uint32_t key[4];
-	if (!parse_key(keyHex, key)) {
-		std::cerr << "Некорректный ключ. Используйте 32 hex символа (128 бит).\n";
-		return 1;
+	if (!parseKey(keyHex, key)) {
+		throw std::runtime_error("Некорректный ключ. Используйте 32 hex символа (128 бит).");
 	}
 
 	try {
-		std::vector<uint8_t> input = readFile(inFile);
+		std::vector<uint8_t> input = loadFile(inFile);
 
 		if (mode == 0) {
 			std::vector<uint8_t> output = cbcEncrypt(input, key);
@@ -150,10 +157,31 @@ int TEA::cipherFunc(int mode, std::string keyHex, std::string inFile, std::strin
 			exportFile(outFile, output);
 			std::cout << "Расшифровка завершена.\n";
 		}
-	} catch (const std::exception& ex) {
-		std::cerr << "Ошибка: " << ex.what() << std::endl;
-		return 1;
+	} catch (const std::runtime_error &e) {
+		std::cerr << "Ошибка: " << e.what() << std::endl;
 	}
 
 	return 0;
+}
+
+std::string TEA::cipherFuncText(int mode, std::string keyHex, std::string text){
+	uint32_t key[4];
+
+	if (!parseKey(keyHex, key)) {
+		throw std::runtime_error("Некорректный ключ. Используйте 32 hex символа (128 бит)");
+	}
+
+	try {
+		std::vector<uint8_t> input(text.begin(), text.end());
+
+		if (mode == 0){
+			std::vector<uint8_t> output = cbcEncrypt(input, key);
+			return std::string(output.begin(), output.end());
+		} else if (mode == 1){
+			std::vector<uint8_t> output = cbcDecrypt(input, key);
+			return std::string(output.begin(), output.end());
+		}
+	} catch (const std::runtime_error &e){
+		std::cerr << "Ошибка: " << e.what() << std::endl;
+	}
 }

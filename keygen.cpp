@@ -56,15 +56,15 @@ void KEYGEN::byteFileKey(std::string& path, size_t length){
     out.close();
 }
 //================================================= 32 хекс
-int KEYGEN::hex32Key() {
+int KEYGEN::hex32Key(const std::string& path) {
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<uint32_t> dis(0, UINT32_MAX);
 
-	std::ofstream file("hex32Key");
+	std::ofstream file(path);
     
-	for (int i = 0; i < 100; i++) {
-		file << std::hex << std::setw(8) << std::setfill('0') << dis(gen) << "\n";
+	for (int i = 0; i < 32; i++) {
+		file << std::hex << std::setw(8) << std::setfill('0') << dis(gen);
 	}
 
 	file.close();

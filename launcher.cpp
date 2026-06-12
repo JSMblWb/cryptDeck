@@ -1,6 +1,5 @@
 #include <iostream>
 #include <fstream>
-#include <utility>
 #include <string>
 #include <filesystem>
 #include <stdexcept>
@@ -32,7 +31,8 @@ enum class encodeOptions{
 	exit = 1,
 	vernam = 2,
 	vigenere = 3,
-	doubleTransposition = 4,	
+	doubleTransposition = 4,
+	tea = 5,
 };
 
 template <typename T>
@@ -136,7 +136,7 @@ void generateKey(){
 
 			if (choice == 1)
 				running = false;
-			if (choice == 2 || choice == 3 || choice == 4 || choice == 5){
+			else if (choice == 2 || choice == 3 || choice == 4){
 				int mode;
 				std::cout << "1. Выход\n2. Текстовый ключ\n 3. Файл-ключ\n\n";
 				correctInput("Ваш выбор: ", mode);
@@ -203,6 +203,23 @@ void generateKey(){
 					default: running=false;
 				}
 			}
+			else if (choice == 5){
+				std::string path;
+
+				correctInput("Введите путь для записи файла-ключа: ", path);
+
+				try {
+					KEYGEN keyGen;
+
+					keyGen.hex32Key(path);
+
+					std::cout << "Файл-ключ успешно записан по адресу: " << path << std::endl;
+					std::this_thread::sleep_for(std::chrono::seconds(3));
+				} catch (const std::runtime_error &e){
+					std::cout << "Ошибка: " << e.what() << std::endl;
+					std::this_thread::sleep_for(std::chrono::seconds(3));
+				}
+			}
 	}
 }
 //=============================================================================== проверяльщик ввода
@@ -212,6 +229,7 @@ void correctInput(std::string question, T& out){
 	while(!(std::cin >> out)){
 		std::cout << "Некорректный ввод\n" << question;
 		std::cin.clear();
+		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 	}
 }
 
@@ -432,32 +450,71 @@ void seqEncode(useType type) {
 			}
 			//======================================================= чай
 			case encodeOptions::tea: {
-				std::string path;
-				std::string outPath;
-				std::string keyPath;
+				if (type == useType::file){
+					std::string path;
+					std::string outPath;
+					std::string keyPath;
 
-				getPath("Введите путь к файлу, который требуется зашифровать: ", path);
-				correctInput("Введите путь для записи файла: ", outPath);
-				getPath("Введите путь к файлу-ключу: ", keyPath);
+					getPath("Введите путь к файлу, который требуется зашифровать: ", path);
+					correctInput("Введите путь для записи файла: ", outPath);
+					getPath("Введите путь к файлу-ключу: ", keyPath);
 
-				try {
-					TEA tea;
-					KEYGEN keygen;
+					try {
+						TEA tea;
+						KEYGEN keygen;
+						std::string keyPath;
+						std::ifstream keyFile;
+						std::string keyHex;
 
-					keygen.hex32Key();
-					ifstream key("hex32Key");
+						getPath("Введите путь к файлу-ключу: ", keyPath);
+					
+						keyFile.open(keyPath, std::ios::in);
+						keyFile >> keyHex;
 
-					tea.cipherFunc(0, key, path, outPath);
+						tea.cipherFunc(0, keyHex, path, outPath);
 
-					std::cout << "Файл успешно зашифрован по пути: " << outPath << std::endl;
-					std::this_thread::sleep_for(std::chrono::seconds(3));
-				} catch (const std::runtime_error &e) {
-					std::cout << "Ошибка: " << e.what() << std::endl;
-					std::this_thread::sleep_for(std::chrono::seconds(3));
+						std::cout << "Файл успешно зашифрован по пути: " << outPath << std::endl;
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+					} catch (const std::runtime_error &e) {
+						std::cout << "Ошибка: " << e.what() << std::endl;
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+					}
+				} else if (type == useType::text) {
+					std::string text;
+					std::string keyPath;
+					std::string keyHex;
+					std::ifstream keyFile;
+
+					getPath("Введите путь к файлу-ключу: ", keyPath);
+					correctInput("Введите текст для шифрования: ", text);
+					
+					keyFile.open(keyPath);
+					keyFile >> keyHex;
+
+					try {
+						TEA tea;
+						std::string out;
+
+						out = tea.cipherFuncText(0, keyHex, text);
+
+						std::cout << "Текст успешно зашифрован: " << out << std::endl;
+						std::cout << "Зашифрованный текст в байтах: ";
+
+						for (char c: out) {
+							std::cout << static_cast<unsigned int>(c) << " ";
+						}
+
+						std::cout << std::endl;
+
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+					} catch (const std::runtime_error &e){
+						std::cout << "Ошибка: " << e.what() << std::endl;
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+					}
 				}
 
 				break;
-                        }
+            }
 			//======================================================= выход
 			case encodeOptions::exit:
 				funcRunning = false;
@@ -485,6 +542,7 @@ void seqDecode(useType type) {
 	2. Шифр Вернама;
 	3. Шифр Виженера;
 	4. Шифр двойной перестановки;
+	5. TEA
 	)";
 
 		std::cout << std::endl << std::endl << R"(      )";
@@ -651,6 +709,58 @@ void seqDecode(useType type) {
 					}
 				}
 				break;
+			}
+			case encodeOptions::tea: {
+				if (type == useType::file){
+					std::string inPath;
+					std::string outPath;
+					std::string keyPath;
+					std::string keyHex;
+					std::ifstream keyFile;
+
+					getPath("Введите путь для файла, который требуется дешифровать: ", inPath);
+					getPath("Введите путь к файлу-ключу: ", keyPath);
+					correctInput("Введите путь для записи файла: ", outPath);
+
+					keyFile.open(keyPath, std::ios::in);
+					keyFile >> keyHex;
+
+					try {
+						TEA tea;
+
+						tea.cipherFunc(1, keyHex, inPath, outPath);
+
+						std::cout << "Файл успешно дешифрован по пути: " << outPath;
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+					} catch (const std::runtime_error &e) {
+						std::cout << "Ошибка: " << e.what() << std::endl;
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+					}
+				} else if (type == useType::text) {
+					std::string text;
+					std::string keyPath;
+					std::ifstream keyFile;
+					std::string keyHex;
+
+					getPath("Введите путь к файлу-ключу: ", keyPath);
+					correctInput("Введите текст для дешифрования: ", text);
+
+					keyFile.open(keyPath);
+					keyFile >> keyHex;
+
+					try {
+						TEA tea;
+						std::string out;
+
+						out = tea.cipherFuncText(1, keyHex, text);
+
+						std::cout << "Текст успешно дешифрован: " << out << std::endl;
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+					} catch (const std::runtime_error &e) {
+						std::cout << "Ошибка: " << e.what() << std::endl;
+						std::this_thread::sleep_for(std::chrono::seconds(3));
+					}
+				}
 			}
 
 			case encodeOptions::exit:
