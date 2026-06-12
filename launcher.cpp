@@ -182,7 +182,7 @@ void generateKey(){
 						std::string path;
 		
 						correctInput("Введите длину ключа в байтах: ", length);
-						getPath("Введите путь для записи файла: ", path);
+						correctInput("Введите путь для записи файла: ", path);
 
 						try {
 							KEYGEN keyGen;
@@ -225,12 +225,29 @@ void generateKey(){
 //=============================================================================== проверяльщик ввода
 template <typename T>
 void correctInput(std::string question, T& out){
+	std::string line;
+	
 	std::cout << question;
-	while(!(std::cin >> out)){
+	while(true){
+		if (!std::getline(std::cin, line) || line.empty()){
+			if (!std::cin)
+				std::cin.clear();
+			std::cout << "Некорректный ввод";
+			continue;
+		}	
+
+		std::stringstream ss(line);
+
+		if (ss >> out)
+			break;
+
 		std::cout << "Некорректный ввод\n" << question;
-		std::cin.clear();
-		std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+		//std::cin.clear();
+		//std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 	}
+	
+	//std::cin.clear();
+	//std::cin.ignore();
 }
 
 //=============================================================================== энкод
