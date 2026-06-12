@@ -22,7 +22,7 @@ void decryptBlock(uint32_t& v0, uint32_t& v1, const uint32_t key[4]) {
 }
 //================================================= конвертация hex-строки в 128-битный ключ 4 x uint32_t, little-endian порядок байт
 bool parseKey(const std::string& hex, uint32_t key[4]) {
-	if (hex.length() != 32*8) return false;
+	if (hex.length() != 32) return false;
 	for (int i = 0; i < 4; ++i) {
 		std::string part = hex.substr(i * 8, 8);
 		try {
@@ -182,6 +182,7 @@ std::string TEA::cipherFuncText(int mode, std::string keyHex, std::string text){
 			return std::string(output.begin(), output.end());
 		}
 	} catch (const std::runtime_error &e){
-		std::cerr << "Ошибка: " << e.what() << std::endl;
+		//std::cerr << "Ошибка: " << e.what() << std::endl;
+		throw std::runtime_error(e.what());
 	}
 }

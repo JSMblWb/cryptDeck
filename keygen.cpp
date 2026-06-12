@@ -63,7 +63,7 @@ int KEYGEN::hex32Key(const std::string& path) {
 
 	std::ofstream file(path);
     
-	for (int i = 0; i < 32; i++) {
+	for (int i = 0; i < 4; i++) {
 		file << std::hex << std::setw(8) << std::setfill('0') << dis(gen);
 	}
 
