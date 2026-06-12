@@ -54,5 +54,3 @@ void KEYGEN::byteFileKey(std::string& path, size_t length){
 
     out.close();
 }
-
-

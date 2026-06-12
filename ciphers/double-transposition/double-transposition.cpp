@@ -72,21 +72,21 @@ std::string singleDecrypt(const std::string& cipher, const std::string& key) {
 	}
 	return plain;
 }
-//================================================== двойной шифр
+//================================================== двойной шифр бинарник
 void doubleEncrypt(const std::string& inputPath, const std::string& outputPath) {
+	std::string key1 = exportFile("keyDT1"), key2 = exportFile("keyDT2");
 	std::string binaryNotEncrypted = loadFile(inputPath);
 	std::string binaryEncryptedOnce = singleEncrypt(binaryNotEncrypted, key1);
 	exportFile(singleEncrypt(binaryEncryptedOnce, key2), outputPath);
 }
 
-//================================================= двойной дешифр
+//================================================= двойной дешифр бинарник
 void doubleDecrypt(const std::string& inputPath, const std::string outputPath) {
+	std::string key1 = exportFile("keyDT1"), key2 = exportFile("keyDT2");
 	std::string binaryNotDecrypted = loadFile(inputPath);
 	std::string binaryDecryptedOnce = singleDecrypt(binaryNotEncrypted, key2);
-	exportFile(singleDecrypt(binaryDecryptedOnce, key1), /*путь*/);
+	exportFile(singleDecrypt(binaryDecryptedOnce, key1), outputPath);
 }
-//================================================= кейген
-
 //================================================= читалка путей
 std::string loadFile(const std::string& filePath) {
 	//открываем поток в бинарном инпут режиме
