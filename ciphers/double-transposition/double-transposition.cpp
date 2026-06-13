@@ -1,7 +1,7 @@
 #include "double-transposition.h"
 
-void exportFile(const std::string& binaryData, const std::filesystem::path& destination);
-std::string loadFile(const std::string& path);
+//void exportFile(const std::string& binaryData, const std::filesystem::path& destination);
+//std::string loadFile(const std::string& path);
 
 //================================================= порядок столбцов для ключа
 std::vector<int> DT::getColumnOrder(const std::string& key) {
@@ -120,7 +120,7 @@ std::string DT::loadFile(const std::string& filePath) {
 	file.seekg(0, std::ios::beg);
 
 	//переводим в строку
-	std::string buffer(0, size);
+	std::string buffer(size, '\0');
 	if (file.read(buffer.data(), size)) {
 		return buffer;
 	} else {
