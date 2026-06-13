@@ -417,7 +417,7 @@ void seqEncode(useType type) {
 					std::string key2Path;
 
 					getPath("Введите путь к файлу, который требуется зашифровать: ", inPath);
-					correctInput("Введите путь для записи файла", outPath);
+					correctInput("Введите путь для записи файла: ", outPath);
 					getPath("Введите путь к первому файлу-ключу: ", key1Path);
 					getPath("Введите путь ко второму файлу-ключу: ", key2Path);
 
@@ -472,20 +472,20 @@ void seqEncode(useType type) {
 					std::string outPath;
 					std::string keyPath;
 					std::ifstream keyFile;
-					std::stringstream keyHex;
+					std::string keyHex;
 
 					getPath("Введите путь к файлу, который требуется зашифровать: ", path);
 					correctInput("Введите путь для записи файла: ", outPath);
 					getPath("Введите путь к файлу-ключу: ", keyPath);
 
-					keyFile.open(keyPath, std::ios::in);
-					keyHex << keyFile.rdbuf();
+					keyFile.open(keyPath);
+					keyFile >> keyHex;
 
 					try {
 						TEA tea;
 
-						tea.cipherFunc(0, keyHex.str(), path, outPath);
-
+						tea.cipherFunc(0, keyHex, path, outPath);
+						
 						std::cout << "Файл успешно зашифрован по пути: " << outPath << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
 					} catch (const std::runtime_error &e) {
@@ -743,7 +743,7 @@ void seqDecode(useType type) {
 
 						tea.cipherFunc(1, keyHex, inPath, outPath);
 
-						std::cout << "Файл успешно дешифрован по пути: " << outPath;
+						std::cout << "Файл успешно дешифрован по пути: " << outPath << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
 					} catch (const std::runtime_error &e) {
 						std::cout << "Ошибка: " << e.what() << std::endl;

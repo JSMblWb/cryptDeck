@@ -4,7 +4,7 @@ void exportFile(const std::string& binaryData, const std::filesystem::path& dest
 std::string loadFile(const std::string& path);
 
 //================================================= порядок столбцов для ключа
-std::vector<int> getColumnOrder(const std::string& key) {
+std::vector<int> DT::getColumnOrder(const std::string& key) {
 	std::vector<std::pair<char, int>> indexed;
 	for (int i = 0; i < key.size(); ++i) {
 		indexed.emplace_back(key[i], i);
@@ -17,7 +17,7 @@ std::vector<int> getColumnOrder(const std::string& key) {
 	return order;
 	}
 //================================================= одиночный шифр
-std::string singleEncrypt(const std::string& text, const std::string& key) {
+std::string DT::singleEncrypt(const std::string& text, const std::string& key) {
 	int k = key.size();
 	if (k == 0 || text.empty()) return text;
 
@@ -44,7 +44,7 @@ std::string singleEncrypt(const std::string& text, const std::string& key) {
 	return cipher;
 }
 //================================================= одиночный дешифр
-std::string singleDecrypt(const std::string& cipher, const std::string& key) {
+std::string DT::singleDecrypt(const std::string& cipher, const std::string& key) {
 	int k = key.size();
 	if (k == 0 || cipher.empty()) return cipher;
 
@@ -108,7 +108,7 @@ std::string DT::doubleDecryptText(const std::string& text, const std::string& ke
 }
 
 //================================================= читалка путей
-std::string loadFile(const std::string& filePath) {
+std::string DT::loadFile(const std::string& filePath) {
 	//открываем поток в бинарном инпут режиме
 	std::ifstream file(filePath, std::ios::binary | std::ios::ate);
 
@@ -129,7 +129,7 @@ std::string loadFile(const std::string& filePath) {
 }
 
 //================================================= заполнялка по путям
-void exportFile(const std::string& binaryData, const std::filesystem::path& destination) {
+void DT::exportFile(const std::string& binaryData, const std::filesystem::path& destination) {
 	//открываем поток в бинарном аутпут режиме
 	std::ofstream outFile(destination, std::ios::out);
 

@@ -22,6 +22,12 @@
 
 class EXPORT DT {
 	public:
+	std::vector<int> getColumnOrder(const std::string& key);
+	std::string singleEncrypt(const std::string& text, const std::string& key);
+	std::string singleDecrypt(const std::string& cipher, const std::string& key);
+	std::string loadFile(const std::string& filePath);
+	void exportFile(const std::string& binaryData, const std::filesystem::path& destination);
+
 	void doubleEncrypt(const std::string& inputPath, const std::string& outputPath, const std::string& key1, const std::string& key2);
 	void doubleDecrypt(const std::string& inputPath, const std::string& outputPath, const std::string& key1, const std::string& key2);
 

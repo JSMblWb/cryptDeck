@@ -1,7 +1,7 @@
 #include "tea.h"
 
 //================================================= базовые операции над одним блоком 64 бита = 2 x uint32_t
-void encryptBlock(uint32_t& v0, uint32_t& v1, const uint32_t key[4]) {
+void TEA::encryptBlock(uint32_t& v0, uint32_t& v1, const uint32_t key[4]) {
 	const uint32_t delta = 0x9E3779B9;
 	uint32_t sum = 0;
 	for (int i = 0; i < 32; ++i) {
@@ -11,7 +11,7 @@ void encryptBlock(uint32_t& v0, uint32_t& v1, const uint32_t key[4]) {
 	}
 }
 
-void decryptBlock(uint32_t& v0, uint32_t& v1, const uint32_t key[4]) {
+void TEA::decryptBlock(uint32_t& v0, uint32_t& v1, const uint32_t key[4]) {
 	const uint32_t delta = 0x9E3779B9;
 	uint32_t sum = delta * 32; //0xC6EF3720
 	for (int i = 0; i < 32; ++i) {
@@ -21,7 +21,7 @@ void decryptBlock(uint32_t& v0, uint32_t& v1, const uint32_t key[4]) {
 	}
 }
 //================================================= конвертация hex-строки в 128-битный ключ 4 x uint32_t, little-endian порядок байт
-bool parseKey(const std::string& hex, uint32_t key[4]) {
+bool TEA::parseKey(const std::string& hex, uint32_t key[4]) {
 	if (hex.length() != 32) return false;
 	for (int i = 0; i < 4; ++i) {
 		std::string part = hex.substr(i * 8, 8);
@@ -34,14 +34,14 @@ bool parseKey(const std::string& hex, uint32_t key[4]) {
 	return true;
 }
 //================================================= дополнение PKCS#7
-std::vector<uint8_t> pkcs7Pad(const std::vector<uint8_t>& data, size_t blockSize = 8) {
+std::vector<uint8_t> TEA::pkcs7Pad(const std::vector<uint8_t>& data, size_t blockSize = 8) {
 	size_t padLen = blockSize - (data.size() % blockSize);
 	std::vector<uint8_t> padded = data;
 	padded.insert(padded.end(), padLen, static_cast<uint8_t>(padLen));
 	return padded;
 }
 //================================================= снятие дополнения PKCS#7
-std::vector<uint8_t> pkcs7Unpad(const std::vector<uint8_t>& data) {
+std::vector<uint8_t> TEA::pkcs7Unpad(const std::vector<uint8_t>& data) {
 	if (data.empty()) throw std::runtime_error("Дополнение отсутсвует");
 	uint8_t padLen = data.back();
 	if (padLen == 0 || padLen > 8) throw std::runtime_error("Дополнение некорректно");
@@ -51,7 +51,7 @@ std::vector<uint8_t> pkcs7Unpad(const std::vector<uint8_t>& data) {
 	return std::vector<uint8_t>(data.begin(), data.end() - padLen);
 }
 //================================================= шифрование в режиме CBC
-std::vector<uint8_t> cbcEncrypt(const std::vector<uint8_t>& plain, const uint32_t key[4]) {
+std::vector<uint8_t> TEA::cbcEncrypt(const std::vector<uint8_t>& plain, const uint32_t key[4]) {
 	//генерация случайного IV
 	std::vector<uint8_t> iv(8);
 	std::random_device rd;
@@ -89,7 +89,7 @@ std::vector<uint8_t> cbcEncrypt(const std::vector<uint8_t>& plain, const uint32_
 	return cipher;
 }
 //================================================= расшифрование в режиме CBC
-std::vector<uint8_t> cbcDecrypt(const std::vector<uint8_t>& cipher, const uint32_t key[4]) {
+std::vector<uint8_t> TEA::cbcDecrypt(const std::vector<uint8_t>& cipher, const uint32_t key[4]) {
 	if (cipher.size() < 16) throw std::runtime_error("Шифротекст слишком короткий (минимум 16 байт)");
 	if (cipher.size() % 8 != 0) throw std::runtime_error("Длина шифротекста должна быть кратна 8");
 
@@ -129,17 +129,27 @@ std::vector<uint8_t> cbcDecrypt(const std::vector<uint8_t>& cipher, const uint32
 	return padded;
 }
 //================================================= читалка файлов
-std::vector<uint8_t> loadFile(const std::string& filename) {
+std::vector<uint8_t> TEA::loadFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::binary);
-	return std::vector<uint8_t>((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+	std::vector<uint8_t> result;
+	std::string buf;
+
+	file >> buf;
+	result = std::vector<uint8_t>(buf.begin(), buf.end());
+
+	return result;
 }
 //================================================= записывалка файлов
-void exportFile(const std::string& filename, const std::vector<uint8_t>& data) {
+void TEA::exportFile(const std::string& filename, const std::vector<uint8_t>& data) {
 	std::ofstream file(filename, std::ios::binary);
+
+	if (!file.is_open())
+		throw std::runtime_error("Ошибка открытия файла");
+
 	file.write(reinterpret_cast<const char*>(data.data()), data.size());
 }
 //================================================= основная функция
-int TEA::cipherFunc(int mode, std::string keyHex, std::string inFile, std::string outFile) {
+int TEA::cipherFunc(int mode, const std::string& keyHex, const std::string& inFile, const std::string& outFile) {
 	uint32_t key[4];
 	if (!parseKey(keyHex, key)) {
 		throw std::runtime_error("Некорректный ключ. Используйте 32 hex символа (128 бит).");
@@ -147,7 +157,6 @@ int TEA::cipherFunc(int mode, std::string keyHex, std::string inFile, std::strin
 
 	try {
 		std::vector<uint8_t> input = loadFile(inFile);
-
 		if (mode == 0) {
 			std::vector<uint8_t> output = cbcEncrypt(input, key);
 			exportFile(outFile, output);
@@ -164,7 +173,7 @@ int TEA::cipherFunc(int mode, std::string keyHex, std::string inFile, std::strin
 	return 0;
 }
 
-std::string TEA::cipherFuncText(int mode, std::string keyHex, std::string text){
+std::string TEA::cipherFuncText(int mode, const std::string& keyHex, const std::string& text){
 	uint32_t key[4];
 
 	if (!parseKey(keyHex, key)) {
