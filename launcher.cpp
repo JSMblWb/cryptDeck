@@ -242,12 +242,7 @@ void correctInput(std::string question, T& out){
 			break;
 
 		std::cout << "Некорректный ввод\n" << question;
-		//std::cin.clear();
-		//std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 	}
-	
-	//std::cin.clear();
-	//std::cin.ignore();
 }
 
 //=============================================================================== энкод
@@ -255,8 +250,6 @@ void seqEncode(useType type) {
 	bool funcRunning = true;
 	bool isInvalid = false;
 	bool isSuccesful = false;
-	//std::pair<std::string, std::string> paths = seqPaths();
-	//clearConsole();
 
 	while (funcRunning) {
 		clearConsole();
@@ -544,7 +537,6 @@ void seqDecode(useType type) {
 	bool funcRunning = true;
 	bool isInvalid = false;
 	bool isSuccesful = false;
-	//std::pair<std::string, std::string> paths = seqPaths();
 
 	while (funcRunning) {
 		clearConsole();
