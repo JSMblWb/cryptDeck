@@ -23,12 +23,20 @@ std::wstring Vigenere::EncryptText(const std::wstring& text, const std::wstring&
 
 std::wstring Vigenere::DecryptText(const std::wstring& encrypted, const std::wstring& key){
     std::wstring out = std::wstring(encrypted.size(), 0);
-    
+	size_t shift = 0;
+
 	if (encrypted.size() == 0 || key.size() == 0)
 		throw std::runtime_error("Длина текста или ключа равна нулю");
 
     for (size_t i = 0; i < encrypted.size(); i++){
-        out[i] = Decrypt(encrypted[i], key[i % key.size()]);
+		wint_t pos = encrypted[i];
+
+		if ((pos >= RU_START && pos <= RU_END) || (pos >= RU_UP_START && pos <= RU_UP_END) || (pos >= LAT_START && pos <= LAT_END) || (pos >= LAT_UP_START && pos <= LAT_UP_END)){
+        	out[i] = Decrypt(encrypted[i], key[(i-shift) % key.size()]);
+		} else {
+			out[i] = encrypted[i];
+			shift++;
+		}
     }
 
     return out;
