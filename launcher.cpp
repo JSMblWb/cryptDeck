@@ -449,7 +449,7 @@ void seqEncode(useType type) {
 
 						std::cout << "\n";
 
-						std::this_thread::sleep_for(std::chrono::seconds(3));
+						std::this_thread::sleep_for(std::chrono::seconds(10));
 					} catch (const std::runtime_error &e) {
 						std::cout << "Ошибка: " << e.what() << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -512,7 +512,7 @@ void seqEncode(useType type) {
 
 						std::cout << std::endl;
 
-						std::this_thread::sleep_for(std::chrono::seconds(3));
+						std::this_thread::sleep_for(std::chrono::seconds(10));
 					} catch (const std::runtime_error &e){
 						std::cout << "Ошибка: " << e.what() << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -707,7 +707,7 @@ void seqDecode(useType type) {
 						dt.doubleDecrypt(inPath, outPath, key1Path, key2Path);
 
 						std::cout << "Файл успешно расшифрован по пути: " << outPath << std::endl;
-						std::this_thread::sleep_for(std::chrono::seconds(3));
+						std::this_thread::sleep_for(std::chrono::seconds(10));
 					} catch (const std::runtime_error &e) {
 						std::cout << "Ошибка: " << e.what() << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -736,7 +736,7 @@ void seqDecode(useType type) {
 						tea.cipherFunc(1, keyHex, inPath, outPath);
 
 						std::cout << "Файл успешно дешифрован по пути: " << outPath << std::endl;
-						std::this_thread::sleep_for(std::chrono::seconds(3));
+						std::this_thread::sleep_for(std::chrono::seconds(10));
 					} catch (const std::runtime_error &e) {
 						std::cout << "Ошибка: " << e.what() << std::endl;
 						std::this_thread::sleep_for(std::chrono::seconds(3));

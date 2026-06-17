@@ -130,12 +130,18 @@ std::vector<uint8_t> TEA::cbcDecrypt(const std::vector<uint8_t>& cipher, const u
 }
 //================================================= читалка файлов
 std::vector<uint8_t> TEA::loadFile(const std::string& filename) {
-	std::ifstream file(filename, std::ios::binary);
-	std::vector<uint8_t> result;
-	std::string buf;
+	std::ifstream file(filename, std::ios::binary | std::ios::ate);
+	if (!file.is_open()) {
+		throw std::runtime_error("Не удалось открыть файл: " + filename);
+	}
 
-	file >> buf;
-	result = std::vector<uint8_t>(buf.begin(), buf.end());
+	std::streamsize size = file.tellg();
+	file.seekg(0, std::ios::beg);
+
+	std::vector<uint8_t> result(size);
+	if (!file.read(reinterpret_cast<char*>(result.data()), size)) {
+		throw std::runtime_error("Ошибка чтения файла");
+	}
 
 	return result;
 }
